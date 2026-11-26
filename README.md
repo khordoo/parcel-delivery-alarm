@@ -8,7 +8,23 @@ PkgWatch is a small package-delivery monitor for macOS. It polls carriers direct
 
 ![PkgWatch web UI: one ASL package out for delivery, one delivered and acknowledged, with history, detection latency and notification tests](docs/screenshot.png)
 
-*Local UI after the first real delivery: the alarm fired 2 min after the driver's scan, acknowledged 6 s later. Tracking numbers in the screenshot are replaced with dummies.*
+*Local UI after the first real delivery: the alarm fired 2 min after the driver's scan and ~17 min before Amazon updated; it was acknowledged 6 s later. Tracking numbers in the screenshot are replaced with dummies.*
+
+## Why
+
+Packages left in a shared lobby or at the door can be stolen within minutes. Amazon's own "Delivered" notification often arrives well after the driver has actually dropped the package off. The carrier records the delivery first, and Amazon picks it up later.
+
+PkgWatch watches the carrier directly and sounds an alarm the moment the carrier marks the package delivered. You can get downstairs before anyone else does.
+
+On the first real delivery it was tested on:
+
+| Event | Time |
+|---|---|
+| Driver scans package as delivered | 2:15:30 PM |
+| **PkgWatch alarm (Mac + iPhone)** | **2:17:36 PM** |
+| Amazon shows "Delivered" | 2:35 PM |
+
+That's **~17 minutes earlier than Amazon**, on a single delivery so far; the gap will vary by carrier and day.
 
 ## Quick start
 
@@ -107,7 +123,7 @@ The first live ASL delivery went like this:
 - ASL's tracking site first showed it at 14:17:36.
 - PkgWatch fired the Mac siren, the Mac notification and an emergency Pushover push in the same second.
 - The alert was acknowledged 6 s later.
-- Amazon's site had **not** updated yet.
+- Amazon's site showed *Delivered* only at **14:35**, about 17 min after the PkgWatch alarm and about 20 min after the driver's scan.
 
 Roughly 2 min of the gap was upstream: the scanner sync plus ASL's site, which kept saying "Out for Delivery" on three polls after the scan time. PkgWatch's own share was under 30 s. Race mode (above) was added to find out whether Precision's tracker is ahead of ASL's.
 
