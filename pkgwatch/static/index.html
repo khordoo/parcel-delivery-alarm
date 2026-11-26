@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PkgWatch</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1d2330;--mute:#667085;--line:#e4e7ec;--acc:#2563eb;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--pill:#eef2f7}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--fg:#e6e8ee;--mute:#9aa3b2;--line:#2a2f3a;--acc:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--pill:#232834}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:20px;margin:0}
+h2{font-size:15px;margin:0 0 12px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.badge{padding:3px 9px;border-radius:999px;background:var(--pill);color:var(--mute);font-size:12px}
+.badge.on{color:var(--ok)} .badge.off{color:var(--warn)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+input,select,button{font:inherit;color:inherit}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>input.grow{flex:1 1 260px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:500;border-top:0}
+.tn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
+.mute{color:var(--mute);font-size:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--pill)}
+.s-delivered,.s-available_for_pickup{background:#dcfce7;color:#166534}
+.s-out_for_delivery{background:#dbeafe;color:#1e40af}
+.s-attempted,.s-exception,.s-returned{background:#fee2e2;color:#991b1b}
+@media (prefers-color-scheme:dark){.s-delivered,.s-available_for_pickup{background:#14532d;color:#bbf7d0}.s-out_for_delivery{background:#1e3a8a;color:#bfdbfe}.s-attempted,.s-exception,.s-returned{background:#7f1d1d;color:#fecaca}}
+.err{color:var(--bad);font-size:12px}
+.actions{display:flex;gap:4px;flex-wrap:wrap}
+.actions button{padding:4px 8px;font-size:12px}
+#alarm{display:none;background:var(--bad);color:#fff;border-radius:12px;padding:18px;margin-bottom:16px;align-items:center;gap:16px;flex-wrap:wrap}
+#alarm.show{display:flex;animation:pulse 1s infinite alternate}
+#alarm button{background:#fff;color:#991b1b;border:0;font-size:18px;font-weight:700;padding:12px 22px}
+@keyframes pulse{from{filter:brightness(1)}to{filter:brightness(1.25)}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+label.c{display:flex;gap:6px;align-items:center}
+details summary{cursor:pointer;color:var(--mute);font-size:12px}
+.events{max-height:320px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.events div{padding:2px 0;border-top:1px dashed var(--line);word-break:break-word}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;display:none;max-width:90vw}
+.tablewrap{overflow-x:auto}
+ol.hist{margin:6px 0 0 18px;padding:0}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>📦 PkgWatch</h1>
+  <div class="badges" id="badges"></div>
+</header>
+
+<div id="alarm"><div style="flex:1;font-size:16px"><b id="alarmTitle">DELIVERED</b><div id="alarmText"></div></div>
+  <button onclick="ack()">Acknowledge</button></div>
+
+<section class="card">
+  <h2>Add package</h2>
+  <form class="row" onsubmit="addPkg(event)">
+    <input class="grow" id="inp" placeholder="Tracking number or tracking URL" required>
+    <select id="car"><option value="">Auto-detect carrier</option></select>
+    <input id="nm" placeholder="Name (optional)" style="width:160px">
+    <input id="iv" type="number" min="5" placeholder="Interval s" style="width:110px" title="Polling interval override (seconds)">
+    <input id="dt" placeholder="Delivered phrase (custom URL only)" style="width:230px;display:none">
+    <button class="primary" id="addBtn">Add</button>
+  </form>
+  <div class="mute" style="margin-top:6px">Paste any carrier URL; unsupported carriers are monitored as a custom page. Testing: <span class="tn">SIM-OFD,ERR,OFD,DEL</span> simulates transitions.</div>
+</section>
+
+<section class="card">
+  <h2>Packages</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Package</th><th>Status</th><th>Carrier time / detected</th><th>Polling</th><th></th></tr></thead>
+    <tbody id="pkgs"><tr><td colspan="5" class="mute">Loading…</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2>Test notifications</h2>
+  <div class="row">
+    <button onclick="test(['alarm','mac','pushover'])" class="primary">Test both channels (Mac alarm + iPhone)</button>
+    <button onclick="test(['alarm'])">Mac alarm only</button>
+    <button onclick="test(['mac'])">Mac notification only</button>
+    <button onclick="test(['pushover'])">Pushover only</button>
+  </div>
+  <div class="mute" id="testOut" style="margin-top:8px"></div>
+</section>
+
+<section class="card">
+  <h2>Settings</h2>
+  <form id="settings" class="grid" onsubmit="saveSettings(event)">
+    <label class="f">Default polling interval (s)<input name="default_interval" type="number" min="5"></label>
+    <label class="f">Alarm system volume (0 = leave as is)<input name="alarm_volume" type="number" min="0" max="100"></label>
+    <label class="f">Custom alarm sound file (blank = siren)<input name="alarm_sound" placeholder="/System/Library/Sounds/Sosumi.aiff"></label>
+    <label class="f">Warn after N consecutive failures<input name="error_alert_after" type="number" min="1"></label>
+    <label class="f">Pushover re-alert every (s, ≥30)<input name="pushover_retry" type="number" min="30"></label>
+    <label class="f">Pushover give up after (s, ≤10800)<input name="pushover_expire" type="number" min="60" max="10800"></label>
+    <label class="f">Pushover sound<input name="pushover_sound" placeholder="persistent"></label>
+    <div>
+      <label class="c"><input type="checkbox" name="alert_delivered"> Alarm on delivered</label>
+      <label class="c"><input type="checkbox" name="alert_pickup"> Alarm on ready-for-pickup</label>
+      <label class="c"><input type="checkbox" name="notify_changes"> Notify out-for-delivery / attempted / exception</label>
+      <label class="c"><input type="checkbox" name="mac_dialog"> Mac "Acknowledge" dialog</label>
+      <label class="c"><input type="checkbox" name="pushover_enabled"> Pushover enabled</label>
+      <label class="c"><input type="checkbox" name="prevent_sleep"> Prevent system sleep while monitoring</label>
+    </div>
+    <div><button class="primary">Save settings</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Pushover (iPhone)</h2>
+  <div id="poStatus" class="mute"></div>
+  <form class="row" onsubmit="savePushover(event)" style="margin-top:8px">
+    <input id="poApp" class="grow" placeholder="Application API token" autocomplete="off">
+    <input id="poUser" class="grow" placeholder="User key" autocomplete="off">
+    <button class="primary">Save to Keychain</button>
+    <button type="button" class="danger" onclick="clearPushover()">Remove</button>
+  </form>
+  <details style="margin-top:8px"><summary>Setup steps</summary>
+    <ol class="mute">
+      <li>Install <b>Pushover</b> on the iPhone (one-time ~US$5 after a 30-day trial) and sign in.</li>
+      <li>On pushover.net, copy your <b>User Key</b> from the dashboard.</li>
+      <li>“Create an Application/API Token” (name it PkgWatch) and copy the <b>API Token</b>.</li>
+      <li>Paste both above. They go to the macOS login Keychain, never to disk in plain text.</li>
+      <li>iPhone: allow Pushover Critical Alerts (Settings → Notifications → Pushover) so emergencies ring through Silent/Focus.</li>
+      <li>Press “Test both channels”, acknowledge on the phone, and confirm the Mac alarm stops too.</li>
+    </ol>
+  </details>
+</section>
+
+<section class="card">
+  <h2>Activity log</h2>
+  <div class="events" id="events"></div>
+  <div class="mute" style="margin-top:6px">Full log incl. every poll: <a href="/api/events" target="_blank">/api/events</a></div>
+</section>
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const H = {"Content-Type":"application/json","X-PkgWatch":"1"};
+let S = null, settingsLoaded = false, openRows = new Set();
+
+async function api(method, path, body){
+  const r = await fetch(path,{method,headers:H,body:body?JSON.stringify(body):undefined});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||("HTTP "+r.status));
+  return j;
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",4000)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function ago(ts){if(!ts)return"never";const d=S.now-ts;if(d<0)return"in "+dur(-d);return dur(d)+" ago"}
+function dur(s){s=Math.round(s);if(s<60)return s+"s";if(s<3600)return Math.round(s/60)+"m";if(s<86400)return(s/3600).toFixed(1)+"h";return Math.round(s/86400)+"d"}
+function t(ts,dateOnly){if(!ts)return"—";const d=new Date(ts*1000);return dateOnly?d.toLocaleDateString():d.toLocaleString()}
+
+function render(){
+  const b=[];
+  b.push(`<span class="badge ${S.sleep_prevented?'on':''}">${S.sleep_prevented?'☕ Sleep prevented':'💤 Sleep allowed'}</span>`);
+  b.push(`<span class="badge ${S.pushover_configured?'on':'off'}">${S.pushover_configured?'📱 Pushover ready':'📱 Pushover not set'}</span>`);
+  b.push(`<span class="badge">up ${dur(S.now-S.started_at)}</span>`);
+  $("#badges").innerHTML=b.join("");
+
+  const keys=Object.keys(S.alarm);
+  $("#alarm").classList.toggle("show",keys.length>0);
+  $("#alarmText").textContent=Object.values(S.alarm).join(" · ");
+  document.title=keys.length?(Math.floor(Date.now()/700)%2?"🚨 DELIVERED":"📦 ACK!"):"PkgWatch";
+
+  const sel=$("#car");
+  if(sel.options.length===1) S.carriers.forEach(c=>sel.add(new Option(c.name,c.id)));
+
+  const rows=S.packages.map(p=>{
+    const st=`<span class="pill s-${p.status}">${esc(p.status_text)}</span>`;
+    const lat=(p.alerted_at&&p.carrier_event_time&&!p.date_only)?` <span class="mute">(+${dur(p.alerted_at-p.carrier_event_time)})</span>`:"";
+    const err=p.consecutive_errors?`<div class="err">⚠ ${p.consecutive_errors} failed request(s): ${esc(p.last_error)}<br>last good data ${ago(p.last_success_at)} — status may be stale</div>`:"";
+    const poll=p.active?(p.checking?"checking…":`every ${dur(p.interval_effective)} · next ${p.next_check_at?ago(p.next_check_at):"soon"}`):"stopped";
+    const hist=(p.events||[]).map(e=>`<li>${esc(t(e.time,p.date_only))} — ${esc(e.label)}${e.location?" · "+esc(e.location):""}</li>`).join("");
+    const open=openRows.has(p.id)?"open":"";
+    return `<tr>
+      <td><div><b>${esc(p.name)||""}</b></div><div class="tn">${p.carrier==="generic"?"custom URL":esc(p.tracking_number)}</div>
+        <div class="mute">${esc(p.carrier_name)}${p.sub_carrier?" → "+esc(p.sub_carrier):""}${p.eta?" · ETA "+esc(p.eta):""}</div></td>
+      <td>${st}<div class="mute">${esc(p.status_label)}</div>${err}
+        ${hist?`<details ${open} ontoggle="tog('${p.id}',this.open)"><summary>history (${p.events.length})</summary><ol class="hist mute">${hist}</ol></details>`:""}</td>
+      <td><div>${esc(t(p.carrier_event_time,p.date_only))}${p.date_only?' <span class="mute">(date only)</span>':""}</div>
+        <div class="mute">${p.alerted_at?"alerted "+esc(t(p.alerted_at))+lat:"changed "+ago(p.last_change_at)}</div>
+        ${p.acknowledged_at?`<div class="mute">ack ${esc(t(p.acknowledged_at))}</div>`:""}</td>
+      <td><div>${poll}</div><div class="mute">checked ${ago(p.last_checked_at)}<br>ok ${ago(p.last_success_at)}</div></td>
+      <td><div class="actions">
+        ${p.active?`<button onclick="act('${p.id}','check')">Check now</button>`:`<button onclick="act('${p.id}','resume')">Resume</button>`}
+        ${p.alerted_at&&!p.acknowledged_at?`<button onclick="ack('${p.id}')">Ack</button>`:""}
+        ${p.public_url?`<a href="${esc(p.public_url)}" target="_blank" rel="noopener"><button>Open</button></a>`:""}
+        <button class="danger" onclick="del('${p.id}')">Remove</button></div></td></tr>`;
+  });
+  $("#pkgs").innerHTML=rows.join("")||`<tr><td colspan="5" class="mute">No packages yet.</td></tr>`;
+
+  $("#events").innerHTML=S.events.map(e=>{
+    const d={...e};["ts","iso","kind","pkg","number","carrier"].forEach(k=>delete d[k]);
+    return `<div><span class="mute">${esc(e.iso)}</span> <b>${esc(e.kind)}</b> ${esc(e.number||"")} ${esc(JSON.stringify(d))}</div>`}).join("");
+
+  $("#poStatus").textContent=S.pushover_configured?"✅ Credentials found in Keychain.":"Not configured — iPhone alerts disabled until you add credentials.";
+  if(!settingsLoaded){settingsLoaded=true;const f=$("#settings");const s=S.settings;
+    for(const k of["default_interval","alarm_volume","alarm_sound","error_alert_after","pushover_retry","pushover_expire","pushover_sound"])f[k].value=s[k];
+    for(const k of["notify_changes","mac_dialog","pushover_enabled","prevent_sleep"])f[k].checked=!!s[k];
+    f.alert_delivered.checked=s.alert_statuses.includes("delivered");f.alert_pickup.checked=s.alert_statuses.includes("available_for_pickup");}
+}
+function tog(id,o){o?openRows.add(id):openRows.delete(id)}
+async function refresh(){try{S=await api("GET","/api/state");render()}catch(e){$("#badges").innerHTML=`<span class="badge off">⚠ PkgWatch not reachable</span>`}}
+async function addPkg(ev){ev.preventDefault();const btn=$("#addBtn");btn.disabled=true;btn.textContent="Adding…";
+  try{await api("POST","/api/packages",{input:$("#inp").value,carrier:$("#car").value,name:$("#nm").value,interval:$("#iv").value||null,delivered_text:$("#dt").value});
+    $("#inp").value="";$("#nm").value="";$("#iv").value="";$("#dt").value="";toast("Added — first check running");refresh()}
+  catch(e){toast(e.message)}finally{btn.disabled=false;btn.textContent="Add"}}
+async function act(id,a){try{await api("POST",`/api/packages/${id}/${a}`);refresh()}catch(e){toast(e.message)}}
+async function del(id){if(!confirm("Stop monitoring and remove this package?"))return;try{await api("DELETE",`/api/packages/${id}`);refresh()}catch(e){toast(e.message)}}
+async function ack(id){try{await api("POST","/api/ack",id?{id}:{});refresh()}catch(e){toast(e.message)}}
+async function test(ch){try{const r=await api("POST","/api/test",{channels:ch});$("#testOut").textContent=Object.entries(r).map(([k,v])=>k+": "+v).join(" · ");refresh()}catch(e){toast(e.message)}}
+async function saveSettings(ev){ev.preventDefault();const f=ev.target;const body={};
+  for(const k of["default_interval","alarm_volume","error_alert_after","pushover_retry","pushover_expire"])body[k]=Number(f[k].value);
+  body.alarm_sound=f.alarm_sound.value.trim();body.pushover_sound=f.pushover_sound.value.trim();
+  for(const k of["notify_changes","mac_dialog","pushover_enabled","prevent_sleep"])body[k]=f[k].checked;
+  body.alert_statuses=[f.alert_delivered.checked&&"delivered",f.alert_pickup.checked&&"available_for_pickup"].filter(Boolean);
+  try{await api("POST","/api/settings",body);settingsLoaded=false;toast("Settings saved");refresh()}catch(e){toast(e.message)}}
+async function savePushover(ev){ev.preventDefault();try{await api("POST","/api/pushover",{app_token:$("#poApp").value,user_key:$("#poUser").value});$("#poApp").value="";$("#poUser").value="";toast("Saved to Keychain");refresh()}catch(e){toast(e.message)}}
+async function clearPushover(){if(!confirm("Remove Pushover credentials from Keychain?"))return;try{await api("DELETE","/api/pushover");refresh()}catch(e){toast(e.message)}}
+$("#car").addEventListener("change",e=>{$("#dt").style.display=e.target.value==="generic"?"":"none"});
+$("#inp").addEventListener("input",e=>{const v=e.target.value.trim();if(/^https?:/i.test(v)&&!/intelcom|dragonfly|asldistribution|precisiondeliveries/i.test(v))$("#dt").style.display=""});
+refresh();setInterval(refresh,2000);
+</script>
+</body>
+</html>

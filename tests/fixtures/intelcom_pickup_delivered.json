@@ -1,0 +1,379 @@
+{
+ "success": true,
+ "data": {
+  "code": "found",
+  "result": {
+   "version": "v3",
+   "tracking_id": "DELCF000123456",
+   "eta": "2026-11-25T14:26:26.000000-05:00",
+   "buffered_eta": "2026-11-25T19:26:26.000Z",
+   "live_buffered_eta": null,
+   "public_eta": null,
+   "driver_name": "REDACTED",
+   "client_code": "AMAZON",
+   "is_green_task": false,
+   "subsidiary": "dragonfly_ca",
+   "service_type": "CDELNXTDAY",
+   "allow_cancel": false,
+   "allow_reschedule": false,
+   "can_reschedule": false,
+   "can_cancel": false,
+   "last_status": {
+    "package_location": null,
+    "timestamp": 1795655790697,
+    "task_type": "last_mile_delivery",
+    "status": 602,
+    "label": "Package Picked Up",
+    "step": 4,
+    "showEta": false,
+    "etaType": "none",
+    "etaBuffer": 0,
+    "liveEtaBuffer": 0,
+    "freqCap": 1,
+    "isDelivered": true,
+    "canReschedule": false,
+    "canCancel": false,
+    "hidden": false,
+    "driver": {
+     "status": 602,
+     "serviceType": "",
+     "label": {
+      "en": "",
+      "fr": "",
+      "nl": ""
+     }
+    },
+    "client": {
+     "status": 602,
+     "label": {
+      "en": "Package from {client}",
+      "fr": "Colis de {client}",
+      "nl": ""
+     }
+    },
+    "labels": {
+     "status": 602,
+     "serviceType": "CDELNXTDAY",
+     "subReason": "",
+     "shortLabel": {
+      "en": "Hooray! Your package has been picked up",
+      "fr": "Hourra! Votre colis a \u00e9t\u00e9 ramass\u00e9",
+      "nl": ""
+     },
+     "longLabel": {
+      "en": "Your package has been picked up. Happy unboxing!",
+      "fr": "Votre colis a \u00e9t\u00e9 ramass\u00e9. Bon d\u00e9ballage!",
+      "nl": ""
+     }
+    },
+    "lottie": {
+     "status": 602,
+     "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/07_Delivered_16x10-2024.json",
+     "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/07_Delivered_1x2-2024.json"
+    },
+    "dropoff": null,
+    "statusCode": 602
+   },
+   "status_list": [
+    {
+     "package_location": null,
+     "timestamp": 1795655790697,
+     "task_type": "last_mile_delivery",
+     "status": 602,
+     "label": "Package Picked Up",
+     "step": 4,
+     "showEta": false,
+     "etaType": "none",
+     "etaBuffer": 0,
+     "liveEtaBuffer": 0,
+     "freqCap": 1,
+     "isDelivered": true,
+     "canReschedule": false,
+     "canCancel": false,
+     "hidden": false,
+     "driver": {
+      "status": 602,
+      "serviceType": "",
+      "label": {
+       "en": "",
+       "fr": "",
+       "nl": ""
+      }
+     },
+     "client": {
+      "status": 602,
+      "label": {
+       "en": "Package from {client}",
+       "fr": "Colis de {client}",
+       "nl": ""
+      }
+     },
+     "labels": {
+      "status": 602,
+      "serviceType": "CDELNXTDAY",
+      "subReason": "",
+      "shortLabel": {
+       "en": "Hooray! Your package has been picked up",
+       "fr": "Hourra! Votre colis a \u00e9t\u00e9 ramass\u00e9",
+       "nl": ""
+      },
+      "longLabel": {
+       "en": "Your package has been picked up. Happy unboxing!",
+       "fr": "Votre colis a \u00e9t\u00e9 ramass\u00e9. Bon d\u00e9ballage!",
+       "nl": ""
+      }
+     },
+     "lottie": {
+      "status": 602,
+      "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/07_Delivered_16x10-2024.json",
+      "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/07_Delivered_1x2-2024.json"
+     },
+     "dropoff": null,
+     "statusCode": 602
+    },
+    {
+     "package_location": {
+      "address": {
+       "city": "",
+       "state": "",
+       "country": ""
+      }
+     },
+     "timestamp": 1795647961780,
+     "task_type": "last_mile_delivery",
+     "status": 650,
+     "label": "Available for pickup",
+     "step": 4,
+     "showEta": false,
+     "etaType": "none",
+     "etaBuffer": 0,
+     "liveEtaBuffer": 0,
+     "freqCap": null,
+     "isDelivered": false,
+     "canReschedule": false,
+     "canCancel": false,
+     "hidden": false,
+     "driver": {
+      "status": 650,
+      "serviceType": "",
+      "label": {
+       "en": "",
+       "fr": "",
+       "nl": ""
+      }
+     },
+     "client": {
+      "status": 650,
+      "label": {
+       "en": "Package from {client}",
+       "fr": "Colis de {client}",
+       "nl": ""
+      }
+     },
+     "labels": {
+      "status": 650,
+      "serviceType": "CDELNXTDAY",
+      "subReason": "",
+      "shortLabel": {
+       "en": "Your package is ready for pickup!",
+       "fr": "Votre colis est pr\u00eat \u00e0 \u00eatre ramass\u00e9!",
+       "nl": ""
+      },
+      "longLabel": {
+       "en": "Good news! Your package has arrived and is waiting for you at the service point!",
+       "fr": "Bonne nouvelle! Votre colis est arriv\u00e9 au point de service et il vous attend!",
+       "nl": ""
+      }
+     },
+     "lottie": {
+      "status": 650,
+      "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/07_Delivered_16x10-2024.json",
+      "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/07_Delivered_1x2-2024.json"
+     },
+     "dropoff": null,
+     "statusCode": 650
+    },
+    {
+     "package_location": {
+      "address": {
+       "city": "",
+       "state": "",
+       "country": ""
+      }
+     },
+     "timestamp": 1795607803761,
+     "task_type": "last_mile_delivery",
+     "status": 106,
+     "label": "Hub station inbound scan",
+     "step": 2,
+     "showEta": true,
+     "etaType": "period",
+     "etaBuffer": 48,
+     "liveEtaBuffer": 0,
+     "freqCap": 1,
+     "isDelivered": false,
+     "canReschedule": false,
+     "canCancel": false,
+     "hidden": false,
+     "driver": {
+      "status": 106,
+      "serviceType": "",
+      "label": {
+       "en": "",
+       "fr": "",
+       "nl": ""
+      }
+     },
+     "client": {
+      "status": 106,
+      "label": {
+       "en": "Package from {client}",
+       "fr": "Colis de {client}",
+       "nl": ""
+      }
+     },
+     "labels": {
+      "status": 106,
+      "serviceType": "",
+      "subReason": "",
+      "shortLabel": {
+       "en": "Your package is on the move!",
+       "fr": "Votre colis se d\u00e9place!",
+       "nl": ""
+      },
+      "longLabel": {
+       "en": "We're leaving now, and we'll notify you once your package reaches the next Intelcom station.",
+       "fr": "\u00c7a bouge! Nous vous informerons lorsque votre colis atteindra la prochaine station Intelcom.",
+       "nl": ""
+      }
+     },
+     "lottie": {
+      "status": 106,
+      "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/04_In-Transit_16x9-%E2%80%93-2024.json",
+      "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/04_In-Transit_1x1-%E2%80%93-2024.json"
+     },
+     "dropoff": null,
+     "statusCode": 106
+    },
+    {
+     "package_location": {
+      "address": {
+       "city": "",
+       "state": "",
+       "country": ""
+      }
+     },
+     "timestamp": 1795607803525,
+     "task_type": "last_mile_delivery",
+     "status": 105,
+     "label": "Received",
+     "step": 2,
+     "showEta": true,
+     "etaType": "period",
+     "etaBuffer": 48,
+     "liveEtaBuffer": 0,
+     "freqCap": 1,
+     "isDelivered": false,
+     "canReschedule": false,
+     "canCancel": false,
+     "hidden": false,
+     "driver": {
+      "status": 105,
+      "serviceType": "",
+      "label": {
+       "en": "",
+       "fr": "",
+       "nl": ""
+      }
+     },
+     "client": {
+      "status": 105,
+      "label": {
+       "en": "Package from {client}",
+       "fr": "Colis de {client}",
+       "nl": ""
+      }
+     },
+     "labels": {
+      "status": 105,
+      "serviceType": "",
+      "subReason": "",
+      "shortLabel": {
+       "en": "Intelcom has your package!",
+       "fr": "Intelcom a re\u00e7u votre colis!",
+       "nl": ""
+      },
+      "longLabel": {
+       "en": "Your merchant has handed us your package. We'll make sure to keep you posted as it makes its way to you.",
+       "fr": "\u00c7a bouge! Votre marchand a d\u00e9pos\u00e9 votre colis. Nous vous informerons lorsqu\u2019il se dirigera vers vous. Restez \u00e0 l'aff\u00fbt!",
+       "nl": ""
+      }
+     },
+     "lottie": {
+      "status": 105,
+      "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/03_Package-Received_16x9_Intelcom_2024-2.json",
+      "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/03_Package-Received_1x1_Intelcom_2024-2.json"
+     },
+     "dropoff": null,
+     "statusCode": 105
+    },
+    {
+     "package_location": null,
+     "timestamp": 1795575763901,
+     "task_type": "last_mile_delivery",
+     "status": 0,
+     "label": "Data received",
+     "step": 1,
+     "showEta": false,
+     "etaType": "none",
+     "etaBuffer": 0,
+     "liveEtaBuffer": 0,
+     "freqCap": 1,
+     "isDelivered": false,
+     "canReschedule": false,
+     "canCancel": false,
+     "hidden": false,
+     "driver": {
+      "status": 0,
+      "serviceType": "",
+      "label": {
+       "en": "",
+       "fr": "",
+       "nl": ""
+      }
+     },
+     "client": {
+      "status": 0,
+      "label": {
+       "en": "Package from {client}",
+       "fr": "Colis de {client}",
+       "nl": ""
+      }
+     },
+     "labels": {
+      "status": 0,
+      "serviceType": "",
+      "subReason": "",
+      "shortLabel": {
+       "en": "Your package will be in good hands with Intelcom!",
+       "fr": "Votre colis sera entre de bonnes mains avec Intelcom!",
+       "nl": ""
+      },
+      "longLabel": {
+       "en": "Good news! We've received your shipment details, but the package is still with your merchant. Stay tuned, and we'll notify you as soon as we receive it.",
+       "fr": "Youhou! Nous avons bien re\u00e7u les d\u00e9tails de votre livraison, mais votre colis est encore chez votre marchand. Vous serez avis\u00e9 de la date de livraison pr\u00e9vue d\u00e8s que nous le recevrons, promis. Restez \u00e0 l\u2019aff\u00fbt.",
+       "nl": ""
+      }
+     },
+     "lottie": {
+      "status": 0,
+      "desktop": "https://intelcom.ca/uploads/5_Animations/tracking/desktop/01_Info-Received_16x9_Intelcom_2024.json",
+      "mobile": "https://intelcom.ca/uploads/5_Animations/tracking/mobile/01_Info-Received_1x1_Intelcom_2024.json"
+     },
+     "dropoff": null,
+     "statusCode": 0
+    }
+   ]
+  }
+ }
+}
