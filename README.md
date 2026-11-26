@@ -6,6 +6,10 @@ PkgWatch is a small package-delivery monitor for macOS. It polls carriers direct
 - Runs as a LaunchAgent, independent of any terminal or Claude Code session.
 - Local web UI at <http://127.0.0.1:8787/>.
 
+![PkgWatch web UI: one ASL package out for delivery, one delivered and acknowledged, with history, detection latency and notification tests](docs/screenshot.png)
+
+*Local UI after the first real delivery: the alarm fired 2 min after the driver's scan, acknowledged 6 s later. Tracking numbers in the screenshot are replaced with dummies.*
+
 ## Quick start
 
 ```bash

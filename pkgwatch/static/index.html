@@ -19,7 +19,7 @@ header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16p
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
 input,select,button{font:inherit;color:inherit}
 input,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
-button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button,a.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-block}
 button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
 button.danger{color:var(--bad)}
 button:disabled{opacity:.5;cursor:default}
@@ -37,7 +37,7 @@ th{font-size:12px;color:var(--mute);font-weight:500;border-top:0}
 @media (prefers-color-scheme:dark){.s-delivered,.s-available_for_pickup{background:#14532d;color:#bbf7d0}.s-out_for_delivery{background:#1e3a8a;color:#bfdbfe}.s-attempted,.s-exception,.s-returned{background:#7f1d1d;color:#fecaca}}
 .err{color:var(--bad);font-size:12px}
 .actions{display:flex;gap:4px;flex-wrap:wrap}
-.actions button{padding:4px 8px;font-size:12px}
+.actions button,.actions a.btn{padding:4px 8px;font-size:12px;line-height:1.45}
 #alarm{display:none;background:var(--bad);color:#fff;border-radius:12px;padding:18px;margin-bottom:16px;align-items:center;gap:16px;flex-wrap:wrap}
 #alarm.show{display:flex;animation:pulse 1s infinite alternate}
 #alarm button{background:#fff;color:#991b1b;border:0;font-size:18px;font-weight:700;padding:12px 22px}
@@ -197,7 +197,7 @@ function render(){
       <td><div class="actions">
         ${p.active?`<button onclick="act('${p.id}','check')">Check now</button>`:`<button onclick="act('${p.id}','resume')">Resume</button>`}
         ${p.alerted_at&&!p.acknowledged_at?`<button onclick="ack('${p.id}')">Ack</button>`:""}
-        ${p.public_url?`<a href="${esc(p.public_url)}" target="_blank" rel="noopener"><button>Open</button></a>`:""}
+        ${p.public_url?`<a class="btn" href="${esc(p.public_url)}" target="_blank" rel="noopener">Open</a>`:""}
         <button class="danger" onclick="del('${p.id}')">Remove</button></div></td></tr>`;
   });
   $("#pkgs").innerHTML=rows.join("")||`<tr><td colspan="5" class="mute">No packages yet.</td></tr>`;
