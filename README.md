@@ -1,4 +1,4 @@
-# PkgWatch
+# PkgWatch — parcel delivery alarm for macOS
 
 PkgWatch is a small package-delivery monitor for macOS. It polls carriers directly. When a package is delivered, it plays a loud, repeating siren on the Mac and sends an emergency-priority Pushover push to the iPhone. Both keep going until you acknowledge one of them.
 
@@ -13,7 +13,7 @@ PkgWatch is a small package-delivery monitor for macOS. It polls carriers direct
 ## Quick start
 
 ```bash
-git clone https://github.com/khordoo/pkgwatch.git && cd pkgwatch
+git clone https://github.com/khordoo/parcel-delivery-alarm.git && cd parcel-delivery-alarm
 ./scripts/install-launchagent.sh          # starts now and at every login, restarts on crash
 open http://127.0.0.1:8787/                # add packages, test alarm, configure
 python3 -m pkgwatch set-pushover           # or use the UI form (stored in Keychain)
