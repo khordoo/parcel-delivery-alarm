@@ -4,7 +4,7 @@ PkgWatch is a small package-delivery monitor for macOS. It polls carriers direct
 
 - Pure Python standard library: no `pip install`, no cloud, no subscriptions (Pushover is a one-time ~US$5).
 - Runs as a LaunchAgent, independent of any terminal or Claude Code session.
-- Local web UI at <http://127.0.0.1:8787/>.
+- Everything happens in a local web page: <http://127.0.0.1:8787/>.
 
 ![PkgWatch web UI: one ASL package out for delivery, one delivered and acknowledged, with history, detection latency and notification tests](docs/screenshot.png)
 
@@ -28,49 +28,38 @@ That's **~17 minutes earlier than Amazon**, on a single delivery so far; the gap
 
 ## Quick start
 
-```bash
-git clone https://github.com/khordoo/parcel-delivery-alarm.git && cd parcel-delivery-alarm
-./scripts/install-launchagent.sh          # starts now and at every login, restarts on crash
-open http://127.0.0.1:8787/                # add packages, test alarm, configure
-python3 -m pkgwatch set-pushover           # or use the UI form (stored in Keychain)
-```
+You need a Mac with Python 3.10 or newer (check with `python3 --version`; if it's older, run `brew install python`). Nothing else.
 
-Other commands:
+**1. Install** (one time; starts automatically at every login):
 
 ```bash
-python3 -m pkgwatch check ASL0012345678     # one-shot lookup, no state/alerts
-python3 -m pkgwatch timeline                # detection + notification timestamps
-python3 -m pkgwatch test-alarm --seconds 5  # hear the siren
-python3 -m pkgwatch serve --port 8787       # run in foreground instead of launchd
-./scripts/uninstall-launchagent.sh
-PYTHONPATH=.:tests python3 -m unittest discover -s tests   # 53 tests
+git clone https://github.com/khordoo/parcel-delivery-alarm.git && cd parcel-delivery-alarm && ./scripts/install-launchagent.sh
 ```
 
-Data lives in `~/Library/Application Support/PkgWatch/`:
-- `state.json`: packages, last status, settings. Written atomically.
-- `events.jsonl`: every poll, status change, error, alert, notification and acknowledgement, with epoch and local timestamps.
-- `pkgwatch.log`: rotating application log.
+**2. Open <http://127.0.0.1:8787>**
 
-## 1. Investigation summary
+**3. Paste your tracking number and click _Add_.** That's it.
 
-Tested in November 2026 with a real ASL package (out for delivery → delivered) and a real Intelcom package (delivered to a pickup point). Numbers below are illustrative.
+When the carrier marks the package delivered, your Mac plays a siren until you click **Acknowledge**. Click **Mac alarm only** on the page once to hear what it sounds like.
 
-| Approach | Latency | Reliability | Coverage | Cost / auth | Verdict |
-|---|---|---|---|---|---|
-| **Intelcom public JSON** `GET intelcom.ca/cfworker/v3/tracking/{id}/` | ~0.1 s response; **Cloudflare cache max-age=30 s** | Structured, has carrier's own `isDelivered` flag and status codes | Intelcom/Dragonfly | Free, no auth | **Used** |
-| **ASL site AJAX** `POST asldistribution.com/wp-admin/admin-ajax.php action=order_tracking` | ~2 s, uncached (`no-store`) | HTML fragment (parser can break on redesign); dates only, no times | ASL incl. its final-mile partners | Free, no auth, no CAPTCHA (page nonce not enforced) | **Used (primary for ASL)** |
-| **Precision Parcel JSON** `track.precisiondeliveries.com/api/shipment-itemId/{id}` | 0.3–25 s (slow, variable; occasional transient upstream errors) | Structured; exact UTC scan times, signature/photo flags | ASL packages whose final mile is Precision | Anonymous session cookie, the same one the public site creates for every visitor | **Raced against ASL while out for delivery; fallback; exact timestamps** |
-| Carrier webhooks | n/a | Neither carrier offers a public developer webhook. Precision has SMS/e-mail opt-in only | — | — | Not usable programmatically |
-| 17TRACK API | Refreshes every **6–12 h** (up to 24 h) | Good | Both carriers listed (keys 100555, 100989) | $19 / 300 shipments, API key | Too slow as a primary source |
-| AfterShip | Refreshes every **3–12 h** | Good | Broad | Paid plans | Too slow |
-| Ship24 | Not published (free: 10 shipments/mo) | Good | Broad | API key | Too slow / too limited |
-| Playwright / browser automation | Same data as above, heavier | — | — | — | Not needed: every page is backed by an API |
-| Amazon tracking page | — | Needs Amazon login (auth wall) | — | — | Skipped: we don't automate authenticated sessions |
-| LLM page interpretation | — | — | — | — | Not needed: everything is deterministic. A small model (e.g. Claude Haiku 4.5) could later classify unfamiliar pages, but it is not used for routine detection. |
+- Supported out of the box: **ASL Distribution**, **Intelcom / Dragonfly**, **Precision Parcel**. The carrier is detected from the number.
+- Other carriers: paste the carrier's tracking-page **URL** instead of the number.
+- Keep the Mac **on with the lid open** while you wait. The screen may turn off; that's fine.
 
-**Decision.** Use direct carrier endpoints. They beat the universal trackers by hours. The universal services are worth adding only as an optional slow backstop for carriers with no adapter.
+## Get alerts on your iPhone (optional)
 
-## 2. Architecture
+Want the alert on your phone too, so it reaches you away from the Mac? It keeps ringing until you acknowledge it.
+
+1. Install **Pushover Notifications** (by Pushover, LLC) from the App Store and create an account. It has a 30-day free trial, then a one-time ~US$5.
+2. On <https://pushover.net>, log in and copy your **User Key** (top right).
+3. On the same page, click **Create an Application/API Token**, name it `PkgWatch`, and copy the **API Token**.
+4. In PkgWatch (<http://127.0.0.1:8787>), paste both into the **Pushover** section and click **Save to Keychain**.
+5. On the iPhone, allow Pushover's notifications, including **Critical Alerts**. That lets alerts ring through Silent mode.
+6. Click **Test both channels**. The Mac and the phone should both ring. Acknowledging on either one stops both.
+
+Your keys are stored in the macOS Keychain, never in a file.
+
+## How it works
 
 ```
 pkgwatch/
@@ -129,22 +118,26 @@ Roughly 2 min of the gap was upstream: the scanner sync plus ASL's site, which k
 
 On the second ASL delivery, race mode answered that: **Precision reported *Delivered* 18 s before ASL's site did**. The alert fired 2 min 48 s after the driver's scan. The iPhone push was what got noticed, because the Mac siren was playing through a sleeping external monitor. That's now fixed (see Limitations → Audio).
 
-## 3. Pushover setup (iPhone)
+## Carrier research
 
-1. Install **Pushover** from the App Store and create an account. After the 30-day trial it is a one-time purchase, ~US$5.
-2. At <https://pushover.net> copy your **User Key**.
-3. Click **Create an Application/API Token**, name it `PkgWatch`, and copy the **API Token**.
-4. Store both, using either:
-   - the UI → *Pushover* → *Save to Keychain*, or
-   - `python3 -m pkgwatch set-pushover` (hidden prompt).
+Tested in November 2026 with a real ASL package (out for delivery → delivered) and a real Intelcom package (delivered to a pickup point). Numbers below are illustrative.
 
-   They are stored in the macOS **login Keychain** (service `pkgwatch.pushover`) through `security -i` on stdin, so they never show up in process lists, `state.json` or logs. To inspect or delete them: Keychain Access → search "PkgWatch". Environment variables `PUSHOVER_APP_TOKEN` / `PUSHOVER_USER_KEY` override the Keychain if set.
-5. On the iPhone, open Settings → Notifications → Pushover and allow notifications, sounds and **Critical Alerts** (Pushover asks the first time). Emergency-priority messages then ring through Silent mode and Focus.
-6. In the UI press **Test both channels**. The siren plays on the Mac and an emergency push repeats on the phone every 30 s. Acknowledge on the phone and confirm the Mac goes quiet within about 15 s.
+| Approach | Latency | Reliability | Coverage | Cost / auth | Verdict |
+|---|---|---|---|---|---|
+| **Intelcom public JSON** `GET intelcom.ca/cfworker/v3/tracking/{id}/` | ~0.1 s response; **Cloudflare cache max-age=30 s** | Structured, has carrier's own `isDelivered` flag and status codes | Intelcom/Dragonfly | Free, no auth | **Used** |
+| **ASL site AJAX** `POST asldistribution.com/wp-admin/admin-ajax.php action=order_tracking` | ~2 s, uncached (`no-store`) | HTML fragment (parser can break on redesign); dates only, no times | ASL incl. its final-mile partners | Free, no auth, no CAPTCHA (page nonce not enforced) | **Used (primary for ASL)** |
+| **Precision Parcel JSON** `track.precisiondeliveries.com/api/shipment-itemId/{id}` | 0.3–25 s (slow, variable; occasional transient upstream errors) | Structured; exact UTC scan times, signature/photo flags | ASL packages whose final mile is Precision | Anonymous session cookie, the same one the public site creates for every visitor | **Raced against ASL while out for delivery; fallback; exact timestamps** |
+| Carrier webhooks | n/a | Neither carrier offers a public developer webhook. Precision has SMS/e-mail opt-in only | — | — | Not usable programmatically |
+| 17TRACK API | Refreshes every **6–12 h** (up to 24 h) | Good | Both carriers listed (keys 100555, 100989) | $19 / 300 shipments, API key | Too slow as a primary source |
+| AfterShip | Refreshes every **3–12 h** | Good | Broad | Paid plans | Too slow |
+| Ship24 | Not published (free: 10 shipments/mo) | Good | Broad | API key | Too slow / too limited |
+| Playwright / browser automation | Same data as above, heavier | — | — | — | Not needed: every page is backed by an API |
+| Amazon tracking page | — | Needs Amazon login (auth wall) | — | — | Skipped: we don't automate authenticated sessions |
+| LLM page interpretation | — | — | — | — | Not needed: everything is deterministic. A small model (e.g. Claude Haiku 4.5) could later classify unfamiliar pages, but it is not used for routine detection. |
 
-Delivery alerts use Pushover **priority 2 (emergency)** with `retry=30 s`, `expire=3600 s` and sound `persistent`, all configurable.
+**Decision.** Use direct carrier endpoints. They beat the universal trackers by hours. The universal services are worth adding only as an optional slow backstop for carriers with no adapter.
 
-## 4. Limitations that affect latency or reliability
+## Limitations
 
 - **Detection latency** is roughly poll interval + carrier propagation + cache.
   - Intelcom's endpoint is CDN-cached for 30 s, so worst case is ~60 s after Intelcom records the event.
@@ -168,3 +161,26 @@ Delivery alerts use Pushover **priority 2 (emergency)** with `retry=30 s`, `expi
   - Focus modes don't block `afplay`. The Mac notification itself can be suppressed by Focus.
 - **Dialog and notification permissions.** The first time, macOS may ask to allow notifications from "Script Editor"/`osascript`. Allow it in System Settings → Notifications.
 - **Amazon** isn't monitored. Its tracking requires your Amazon login, which this app deliberately doesn't automate.
+
+## Advanced
+
+Command line (run inside the project folder):
+
+```bash
+python3 -m pkgwatch set-pushover           # store Pushover keys from the terminal
+python3 -m pkgwatch check ASL0012345678     # one-shot lookup, no state/alerts
+python3 -m pkgwatch timeline                # detection + notification timestamps
+python3 -m pkgwatch test-alarm --seconds 5  # hear the siren
+python3 -m pkgwatch serve --port 8787       # run in foreground instead of launchd
+./scripts/uninstall-launchagent.sh          # stop and remove (keeps data)
+PYTHONPATH=.:tests python3 -m unittest discover -s tests   # 53 tests
+```
+
+Data lives in `~/Library/Application Support/PkgWatch/`:
+- `state.json`: packages, last status, settings. Written atomically.
+- `events.jsonl`: every poll, status change, error, alert, notification and acknowledgement, with epoch and local timestamps.
+- `pkgwatch.log`: rotating application log.
+
+**Pushover details.** Credentials are stored in the macOS **login Keychain** (service `pkgwatch.pushover`) through `security -i` on stdin, so they never show up in process lists, `state.json` or logs. To inspect or delete them: Keychain Access → search "PkgWatch". Environment variables `PUSHOVER_APP_TOKEN` / `PUSHOVER_USER_KEY` override the Keychain if set. Delivery alerts use Pushover **priority 2 (emergency)** with `retry=30 s`, `expire=3600 s` and sound `persistent`, all configurable.
+
+**Restart after changing the code:** `launchctl kickstart -k gui/$(id -u)/com.pkgwatch.agent`
