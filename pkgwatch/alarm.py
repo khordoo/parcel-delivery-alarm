@@ -11,6 +11,8 @@ import wave
 from pathlib import Path
 from typing import Callable
 
+from . import audio
+
 log = logging.getLogger(__name__)
 
 
@@ -55,6 +57,7 @@ class Alarm:
         self._player: subprocess.Popen | None = None
         self._dialog: subprocess.Popen | None = None
         self._saved_volume: tuple[str, str] | None = None
+        self._saved_output: int | None = None
 
     @property
     def active(self) -> dict[str, str]:
@@ -100,6 +103,7 @@ class Alarm:
         return keys
 
     def _run(self):
+        self._route_output()
         self._boost_volume()
         try:
             while not self._stop.is_set():
@@ -113,6 +117,33 @@ class Alarm:
                     self._stop.wait(1)
         finally:
             self._restore_volume()
+            self._restore_output()
+
+    def _route_output(self):
+        """Play on the built-in speakers (configurable): a sleeping external monitor is silent."""
+        choice = self._settings().get("alarm_output", "builtin")
+        try:
+            target = audio.resolve(choice)
+            current = audio.default_output()
+            if target is None:
+                if choice.lower() != "default":
+                    log.warning("alarm output '%s' not found; using system default output", choice)
+                return
+            if current != target["id"] and audio.set_default_output(target["id"]):
+                self._saved_output = current
+                log.info("alarm output switched to %s", target["name"])
+        except OSError as e:
+            log.warning("could not select alarm output: %s", e)
+
+    def _restore_output(self):
+        if self._saved_output is None:
+            return
+        prev, self._saved_output = self._saved_output, None
+        try:
+            audio.set_default_output(prev)
+            log.info("audio output restored")
+        except OSError as e:
+            log.warning("could not restore audio output: %s", e)
 
     def _boost_volume(self):
         target = int(self._settings().get("alarm_volume", 100) or 0)

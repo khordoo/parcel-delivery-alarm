@@ -100,6 +100,7 @@ ol.hist{margin:6px 0 0 18px;padding:0}
   <form id="settings" class="grid" onsubmit="saveSettings(event)">
     <label class="f">Default polling interval (s)<input name="default_interval" type="number" min="5"></label>
     <label class="f">Alarm system volume (0 = leave as is)<input name="alarm_volume" type="number" min="0" max="100"></label>
+    <label class="f">Alarm speaker (builtin / default / device name)<input name="alarm_output" placeholder="builtin" title="builtin = MacBook speakers (audible even when an external display sleeps)"></label>
     <label class="f">Custom alarm sound file (blank = siren)<input name="alarm_sound" placeholder="/System/Library/Sounds/Sosumi.aiff"></label>
     <label class="f">Warn after N consecutive failures<input name="error_alert_after" type="number" min="1"></label>
     <label class="f">Pushover re-alert every (s, ≥30)<input name="pushover_retry" type="number" min="30"></label>
@@ -208,7 +209,7 @@ function render(){
 
   $("#poStatus").textContent=S.pushover_configured?"✅ Credentials found in Keychain.":"Not configured — iPhone alerts disabled until you add credentials.";
   if(!settingsLoaded){settingsLoaded=true;const f=$("#settings");const s=S.settings;
-    for(const k of["default_interval","alarm_volume","alarm_sound","error_alert_after","pushover_retry","pushover_expire","pushover_sound"])f[k].value=s[k];
+    for(const k of["default_interval","alarm_volume","alarm_sound","alarm_output","error_alert_after","pushover_retry","pushover_expire","pushover_sound"])f[k].value=s[k];
     for(const k of["notify_changes","mac_dialog","pushover_enabled","prevent_sleep"])f[k].checked=!!s[k];
     f.alert_delivered.checked=s.alert_statuses.includes("delivered");f.alert_pickup.checked=s.alert_statuses.includes("available_for_pickup");}
 }
@@ -224,7 +225,7 @@ async function ack(id){try{await api("POST","/api/ack",id?{id}:{});refresh()}cat
 async function test(ch){try{const r=await api("POST","/api/test",{channels:ch});$("#testOut").textContent=Object.entries(r).map(([k,v])=>k+": "+v).join(" · ");refresh()}catch(e){toast(e.message)}}
 async function saveSettings(ev){ev.preventDefault();const f=ev.target;const body={};
   for(const k of["default_interval","alarm_volume","error_alert_after","pushover_retry","pushover_expire"])body[k]=Number(f[k].value);
-  body.alarm_sound=f.alarm_sound.value.trim();body.pushover_sound=f.pushover_sound.value.trim();
+  body.alarm_sound=f.alarm_sound.value.trim();body.alarm_output=f.alarm_output.value.trim()||"builtin";body.pushover_sound=f.pushover_sound.value.trim();
   for(const k of["notify_changes","mac_dialog","pushover_enabled","prevent_sleep"])body[k]=f[k].checked;
   body.alert_statuses=[f.alert_delivered.checked&&"delivered",f.alert_pickup.checked&&"available_for_pickup"].filter(Boolean);
   try{await api("POST","/api/settings",body);settingsLoaded=false;toast("Settings saved");refresh()}catch(e){toast(e.message)}}

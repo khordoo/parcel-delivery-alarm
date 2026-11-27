@@ -127,6 +127,8 @@ The first live ASL delivery went like this:
 
 Roughly 2 min of the gap was upstream: the scanner sync plus ASL's site, which kept saying "Out for Delivery" on three polls after the scan time. PkgWatch's own share was under 30 s. Race mode (above) was added to find out whether Precision's tracker is ahead of ASL's.
 
+On the second ASL delivery, race mode answered that: **Precision reported *Delivered* 18 s before ASL's site did**. The alert fired 2 min 48 s after the driver's scan. The iPhone push was what got noticed, because the Mac siren was playing through a sleeping external monitor. That's now fixed (see Limitations → Audio).
+
 ## 3. Pushover setup (iPhone)
 
 1. Install **Pushover** from the App Store and create an account. After the 30-day trial it is a one-time purchase, ~US$5.
@@ -160,7 +162,8 @@ Delivery alerts use Pushover **priority 2 (emergency)** with `retry=30 s`, `expi
   - The LaunchAgent starts at *login*, not at boot. After a reboot nothing runs until you log in. Enable automatic login if you need unattended recovery.
   - State persists, so monitoring resumes where it left off. Unacknowledged alarms resume locally.
 - **Audio.**
-  - The siren goes to the current output device. If headphones or Bluetooth are connected, that's where it plays.
+  - By default the siren plays on the **built-in speakers**: during an alarm the system output is switched to them and restored on acknowledge. Reason: an external monitor's speakers go silent when the display sleeps, which made the second real alert inaudible. Set *Alarm speaker* to `default` or part of a device name to change this.
+  - Anything else playing audio moves to the built-in speakers while the alarm sounds.
   - Volume is raised during the alarm and restored afterwards, but only on devices with software volume. Outputs without software volume (e.g. HDMI/DisplayPort audio, some interfaces) play at the device's own level.
   - Focus modes don't block `afplay`. The Mac notification itself can be suppressed by Focus.
 - **Dialog and notification permissions.** The first time, macOS may ask to allow notifications from "Script Editor"/`osascript`. Allow it in System Settings → Notifications.

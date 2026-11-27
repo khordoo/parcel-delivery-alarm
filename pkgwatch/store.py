@@ -22,6 +22,7 @@ DEFAULT_SETTINGS = {
     "notify_changes": True,  # macOS/Pushover heads-up for out-for-delivery, attempted, exception
     "alarm_sound": "",  # empty = built-in siren
     "alarm_volume": 100,  # system output volume during alarm (0 = don't touch)
+    "alarm_output": "builtin",  # builtin | default | part of a device name
     "mac_dialog": True,  # modal "Acknowledge" alert on the Mac
     "pushover_enabled": True,
     "pushover_retry": 30,  # emergency: re-alert phone every N s (min 30)
