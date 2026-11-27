@@ -25,6 +25,7 @@ BACKOFF_MAX = 300.0
 BLOCKED_BACKOFF = 900.0
 RECEIPT_POLL = 15.0
 RESUME_ALARM_WINDOW = 24 * 3600
+NOT_FOUND_INTERVAL = 300.0
 
 
 def fmt_time(ts: float | None, date_only: bool = False) -> str:
@@ -106,7 +107,12 @@ class Monitor:
             floor = self.get_carrier(p.carrier).min_interval
         except ValueError:
             floor = 30.0
-        return max(float(p.interval or self.store.settings["default_interval"]), floor)
+        interval = max(float(p.interval or self.store.settings["default_interval"]), floor)
+        if p.status == Status.NOT_FOUND.value:
+            # Not in the carrier's system yet (label printed, not handed over). Delivery is hours
+            # away at the earliest, so check gently; full speed resumes as soon as it appears.
+            interval = max(interval, NOT_FOUND_INTERVAL)
+        return interval
 
     def check_now(self, pkg_id: str):
         with self._lock:
@@ -213,7 +219,7 @@ class Monitor:
             with self._lock:
                 self._next.pop(pkg.id, None)
         else:
-            self._schedule(pkg.id, self.interval(pkg))
+            self._schedule(pkg.id, self.interval(updated))
 
     # ---------- alerts ----------
     def _alert_title(self, p: Package) -> str:

@@ -97,7 +97,7 @@ def parse(data: dict) -> TrackingResult:
         if code in ("rate_limited", "too_many_requests"):
             raise TrackingError("asl: rate limited", retry_after=120)
         if code in ("not_found", "invalid", "no_results"):
-            return TrackingResult(Status.NOT_FOUND, "Tracking number not found", source="asldistribution.com")
+            return TrackingResult(Status.NOT_FOUND, "Not in ASL's system yet (normal before the carrier receives it)", source="asldistribution.com")
         raise TrackingError(f"asl returned error code '{code}'")
     frag = (data.get("data") or {}).get("html") or ""
     p = _ResultParser()
@@ -105,7 +105,7 @@ def parse(data: dict) -> TrackingResult:
     events = [e for e in p.events if e.get("label")]
     if not events:
         if re.search(r"not found|no result|invalid", html.unescape(frag), re.I):
-            return TrackingResult(Status.NOT_FOUND, "Tracking number not found", source="asldistribution.com")
+            return TrackingResult(Status.NOT_FOUND, "Not in ASL's system yet (normal before the carrier receives it)", source="asldistribution.com")
         raise TrackingError("asl: could not parse tracking result (page layout changed?)")
     norm = [Event(time=_parse_date(e.get("date", "")), label=e["label"], location=e.get("location", ""),
                   status=classify(e["label"]).value) for e in events]
@@ -157,7 +157,8 @@ class ASL(Carrier):
             form["nonce"] = nonce
         r = self.session.post(AJAX, data=form, headers={"Accept": "application/json",
                                                         "X-Requested-With": "XMLHttpRequest",
-                                                        "Referer": PAGE})
+                                                        "Referer": PAGE},
+                              ok_statuses=(200, 404))  # 404 + {"code":"not_found"} = not in ASL's system yet
         return parse(r.json())
 
     # ---------- race mode ----------

@@ -182,5 +182,27 @@ class ResolveTest(unittest.TestCase):
             carriers.resolve("ABC", "nope")
 
 
+class ASLHttp404Test(unittest.TestCase):
+    def test_http_404_not_found_means_not_in_system_yet(self):
+        from pkgwatch.http import Response
+        a = asl.ASL()
+        a._get_nonce = lambda: ""
+        a.session.post = lambda url, **kw: (
+            Response(404, {}, b'{"success":false,"data":{"code":"not_found"}}', url)
+            if 404 in kw.get("ok_statuses", ()) else (_ for _ in ()).throw(TrackingError("HTTP 404")))
+        from pkgwatch.models import Package
+        r = a._track_asl(Package(tracking_number="ASL0000000001", carrier="asl"))
+        self.assertEqual(r.status, Status.NOT_FOUND)
+
+    def test_http_404_without_json_is_still_an_error(self):
+        from pkgwatch.http import Response
+        from pkgwatch.models import Package
+        a = asl.ASL()
+        a._get_nonce = lambda: ""
+        a.session.post = lambda url, **kw: Response(404, {}, b"<html>gone</html>", url)
+        with self.assertRaises(TrackingError):
+            a._track_asl(Package(tracking_number="ASL0000000001", carrier="asl"))
+
+
 if __name__ == "__main__":
     unittest.main()

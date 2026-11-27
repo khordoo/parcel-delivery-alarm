@@ -235,5 +235,23 @@ class SchedulingTest(unittest.TestCase):
         self.assertEqual(m.interval(p2), 45)
 
 
+class NotFoundYetTest(unittest.TestCase):
+    def test_not_found_is_not_an_error_and_polls_gently_then_speeds_up(self):
+        m = make_monitor([Status.NOT_FOUND, Status.NOT_FOUND, OFD])
+        p = add(m)
+        for _ in range(2):
+            t0 = time.time()
+            m.check(p.id)
+            got = m.store.get(p.id)
+            self.assertEqual((got.status, got.consecutive_errors, got.error_notified), ("not_found", 0, False))
+            self.assertGreater(m._next[p.id] - t0, 280, "checks every ~5 min while not in carrier's system")
+        t0 = time.time()
+        m.check(p.id)
+        self.assertEqual(m.store.get(p.id).status, "out_for_delivery")
+        self.assertLess(m._next[p.id] - t0, 35, "back to normal interval once the carrier has it")
+        settle()
+        self.assertEqual(m.alarm.started, [])
+
+
 if __name__ == "__main__":
     unittest.main()
