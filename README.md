@@ -54,7 +54,9 @@ Want the alert on your phone too, so it reaches you away from the Mac? It keeps 
 2. On <https://pushover.net>, log in and copy your **User Key** (top right).
 3. On the same page, click **Create an Application/API Token**, name it `PkgWatch`, and copy the **API Token**.
 4. In PkgWatch (<http://127.0.0.1:8787>), paste both into the **Pushover** section and click **Save to Keychain**.
-5. On the iPhone, allow Pushover's notifications, including **Critical Alerts** (Settings → Notifications → Pushover). Without it, **Do Not Disturb, Focus or Silent mode mute the delivery alert**; with it, the alert rings through all of them.
+5. Make sure the alert can **ring** when your phone is on Do Not Disturb or Focus. Otherwise it may only show on screen without sound (the "Time Sensitive" setting alone does not make it ring). Either:
+   - enable **Critical Alerts** in the Pushover app's settings and allow it when iOS asks. It then rings through Do Not Disturb, every Focus and the Silent switch. Or:
+   - add **Pushover** to the *allowed apps* of **every** Focus you use (Do Not Disturb, Sleep, Work…), and keep the Silent switch off.
 6. Turn on Do Not Disturb and click **Test both channels**. The Mac and the phone should both ring. Acknowledging on either one stops both.
 
 Your keys are stored in the macOS Keychain, never in a file.
