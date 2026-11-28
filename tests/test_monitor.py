@@ -253,5 +253,37 @@ class NotFoundYetTest(unittest.TestCase):
         self.assertEqual(m.alarm.started, [])
 
 
+class SeenAtTest(unittest.TestCase):
+    def _res(self, *labels):
+        from pkgwatch.models import Event, TrackingResult
+        return TrackingResult(OFD, labels[0], events=[Event(time=1.0, label=lab) for lab in labels], date_only=True)
+
+    def test_first_seen_is_stamped_once_and_carried(self):
+        from pkgwatch.monitor import Monitor
+        pkg = Package(tracking_number="S1", carrier="scripted")
+        ev = Monitor._stamp_seen(pkg, self._res("Manifest Scan"), now=100.0)
+        self.assertIsNone(ev[0]["seen_at"], "existed before monitoring started")
+        pkg.events, pkg.last_success_at = ev, 100.0
+        ev = Monitor._stamp_seen(pkg, self._res("Out for Delivery", "Manifest Scan"), now=200.0)
+        self.assertEqual([e["seen_at"] for e in ev], [200.0, None])
+        pkg.events = ev
+        ev = Monitor._stamp_seen(pkg, self._res("Out for Delivery", "Manifest Scan"), now=300.0)
+        self.assertEqual([e["seen_at"] for e in ev], [200.0, None], "not re-stamped on later polls")
+
+    def test_first_appearance_after_not_found_is_stamped(self):
+        from pkgwatch.monitor import Monitor
+        pkg = Package(tracking_number="S2", carrier="scripted", status="not_found", last_success_at=50.0)
+        ev = Monitor._stamp_seen(pkg, self._res("Manifest Scan"), now=100.0)
+        self.assertEqual(ev[0]["seen_at"], 100.0)
+
+    def test_legacy_events_backfilled_from_last_change(self):
+        from pkgwatch.monitor import Monitor
+        pkg = Package(tracking_number="S3", carrier="scripted", status_label="Manifest Scan",
+                      last_success_at=90.0, last_change_at=42.0,
+                      events=[{"time": 1.0, "label": "Manifest Scan", "location": "", "status": "x", "code": ""}])
+        ev = Monitor._stamp_seen(pkg, self._res("Manifest Scan"), now=100.0)
+        self.assertEqual(ev[0]["seen_at"], 42.0)
+
+
 if __name__ == "__main__":
     unittest.main()

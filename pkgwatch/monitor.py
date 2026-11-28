@@ -186,7 +186,7 @@ class Monitor:
             error_notified=False, status=res.status.value, status_label=res.label,
             sub_carrier=res.sub_carrier or pkg.sub_carrier, eta=res.eta or pkg.eta,
             carrier_event_time=res.event_time, date_only=res.date_only,
-            events=[asdict(e) for e in res.events[:25]],
+            events=self._stamp_seen(pkg, res, now),
         )
         if changed:
             fields["last_change_at"] = now
@@ -220,6 +220,27 @@ class Monitor:
                 self._next.pop(pkg.id, None)
         else:
             self._schedule(pkg.id, self.interval(updated))
+
+    @staticmethod
+    def _stamp_seen(pkg: Package, res: TrackingResult, now: float) -> list[dict]:
+        """Carry each event's first-seen time across polls (ASL only gives dates, so this is
+        the best "when" we have). Events already present on the very first successful poll
+        happened before monitoring started and get no stamp."""
+        prev = {(e.get("label"), e.get("location"), e.get("time")): e for e in pkg.events}
+        legacy = bool(pkg.events) and all("seen_at" not in e for e in pkg.events)
+        out = []
+        for e in res.events[:25]:
+            d = asdict(e)
+            old = prev.get((d["label"], d["location"], d["time"]))
+            if old is not None and "seen_at" in old:
+                d["seen_at"] = old["seen_at"]
+            elif old is not None or pkg.last_success_at is None:
+                # Seen before this feature existed, or already there when monitoring started.
+                d["seen_at"] = pkg.last_change_at if (legacy and d["label"] == pkg.status_label) else None
+            else:
+                d["seen_at"] = now
+            out.append(d)
+        return out
 
     # ---------- alerts ----------
     def _alert_title(self, p: Package) -> str:

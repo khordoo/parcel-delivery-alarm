@@ -162,6 +162,7 @@ function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";cl
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function ago(ts){if(!ts)return"never";const d=S.now-ts;if(d<0)return"in "+dur(-d);return dur(d)+" ago"}
 function dur(s){s=Math.round(s);if(s<60)return s+"s";if(s<3600)return Math.round(s/60)+"m";if(s<86400)return(s/3600).toFixed(1)+"h";return Math.round(s/86400)+"d"}
+function tm(ts){return new Date(ts*1000).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
 function t(ts,dateOnly){if(!ts)return"—";const d=new Date(ts*1000);return dateOnly?d.toLocaleDateString():d.toLocaleString()}
 
 function render(){
@@ -184,14 +185,15 @@ function render(){
     const lat=(p.alerted_at&&p.carrier_event_time&&!p.date_only)?` <span class="mute">(+${dur(p.alerted_at-p.carrier_event_time)})</span>`:"";
     const err=p.consecutive_errors?`<div class="err">⚠ ${p.consecutive_errors} failed request(s): ${esc(p.last_error)}<br>last good data ${ago(p.last_success_at)} — status may be stale</div>`:"";
     const poll=p.active?(p.checking?"checking…":`every ${dur(p.interval_effective)} · next ${p.next_check_at?ago(p.next_check_at):"soon"}`):"stopped";
-    const hist=(p.events||[]).map(e=>`<li>${esc(t(e.time,p.date_only))} — ${esc(e.label)}${e.location?" · "+esc(e.location):""}</li>`).join("");
+    const hist=(p.events||[]).map(e=>`<li>${esc(t(e.time,p.date_only))}${p.date_only&&e.seen_at?` <span title="first seen by PkgWatch">(seen ${esc(tm(e.seen_at))})</span>`:""} — ${esc(e.label)}${e.location?" · "+esc(e.location):""}</li>`).join("");
+    const seen=p.date_only&&p.events&&p.events[0]&&p.events[0].seen_at;
     const open=openRows.has(p.id)?"open":"";
     return `<tr>
       <td><div><b>${esc(p.name)||""}</b></div><div class="tn">${p.carrier==="generic"?"custom URL":esc(p.tracking_number)}</div>
         <div class="mute">${esc(p.carrier_name)}${p.sub_carrier?" → "+esc(p.sub_carrier):""}${p.eta?" · ETA "+esc(p.eta):""}</div></td>
       <td>${st}<div class="mute">${esc(p.status_label)}</div>${err}
         ${hist?`<details ${open} ontoggle="tog('${p.id}',this.open)"><summary>history (${p.events.length})</summary><ol class="hist mute">${hist}</ol></details>`:""}</td>
-      <td><div>${esc(t(p.carrier_event_time,p.date_only))}${p.date_only?' <span class="mute">(date only)</span>':""}</div>
+      <td><div>${esc(t(p.carrier_event_time,p.date_only))}${p.date_only?(seen?` <span class="mute">· seen ${esc(tm(seen))}</span>`:' <span class="mute">(date only)</span>'):""}</div>
         <div class="mute">${p.alerted_at?"alerted "+esc(t(p.alerted_at))+lat:"changed "+ago(p.last_change_at)}</div>
         ${p.acknowledged_at?`<div class="mute">ack ${esc(t(p.acknowledged_at))}</div>`:""}</td>
       <td><div>${poll}</div><div class="mute">checked ${ago(p.last_checked_at)}<br>ok ${ago(p.last_success_at)}</div></td>
