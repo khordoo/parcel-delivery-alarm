@@ -57,6 +57,8 @@ Want the alert on your phone too, so it reaches you away from the Mac? It keeps 
 5. Make sure the alert can **ring** when your phone is on Do Not Disturb or Focus. Otherwise it may only show on screen without sound (the "Time Sensitive" setting alone does not make it ring). Either:
    - **Recommended:** open the **Pushover app** (not iPhone Settings) → Settings and turn on **Critical Alerts** for emergency priority. Optionally also turn it on for high priority. Allow it when iOS asks, and check the critical-alert volume there. The alert then rings through Do Not Disturb, every Focus and the Silent switch. iPhone Settings → Notifications → Pushover only shows a Critical Alerts toggle after this step. Or:
    - add **Pushover** to the *allowed apps* of **every** Focus you use (Do Not Disturb, Sleep, Work…), and keep the Silent switch off.
+
+   In the same Pushover app settings, turn **off** *Always use high-priority default*. Otherwise the app replaces PkgWatch's long alarm sound with a short chime.
 6. Turn on Do Not Disturb and click **Test both channels**. The Mac and the phone should both ring. Acknowledging on either one stops both.
 
 Your keys are stored in the macOS Keychain, never in a file.
