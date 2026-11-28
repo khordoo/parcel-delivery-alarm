@@ -31,10 +31,25 @@ th{font-size:12px;color:var(--mute);font-weight:500;border-top:0}
 .tn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
 .mute{color:var(--mute);font-size:12px}
 .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--pill)}
-.s-delivered,.s-available_for_pickup{background:#dcfce7;color:#166534}
-.s-out_for_delivery{background:#dbeafe;color:#1e40af}
+/* status colours follow the package's progress: gray → purple → blue → amber → green; red = needs attention */
+.s-unknown,.s-not_found{background:#f1f5f9;color:#64748b}
+.s-info_received{background:#ede9fe;color:#5b21b6}
+.s-in_transit{background:#dbeafe;color:#1e40af}
+.s-out_for_delivery{background:#fef3c7;color:#92400e}
+.s-available_for_pickup{background:#ccfbf1;color:#115e59}
+.s-delivered{background:#dcfce7;color:#166534}
 .s-attempted,.s-exception,.s-returned{background:#fee2e2;color:#991b1b}
-@media (prefers-color-scheme:dark){.s-delivered,.s-available_for_pickup{background:#14532d;color:#bbf7d0}.s-out_for_delivery{background:#1e3a8a;color:#bfdbfe}.s-attempted,.s-exception,.s-returned{background:#7f1d1d;color:#fecaca}}
+@media (prefers-color-scheme:dark){
+.s-unknown,.s-not_found{background:#1e293b;color:#94a3b8}
+.s-info_received{background:#3b0764;color:#ddd6fe}
+.s-in_transit{background:#1e3a8a;color:#bfdbfe}
+.s-out_for_delivery{background:#78350f;color:#fde68a}
+.s-available_for_pickup{background:#134e4a;color:#99f6e4}
+.s-delivered{background:#14532d;color:#bbf7d0}
+.s-attempted,.s-exception,.s-returned{background:#7f1d1d;color:#fecaca}}
+.pill.fresh{box-shadow:0 0 0 3px rgba(245,158,11,.45);animation:fresh 1.6s ease-in-out infinite alternate}
+@keyframes fresh{from{box-shadow:0 0 0 2px rgba(245,158,11,.25)}to{box-shadow:0 0 0 5px rgba(245,158,11,.55)}}
+.newtag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.04em;background:#f59e0b;color:#1f1300;vertical-align:middle}
 .err{color:var(--bad);font-size:12px}
 .actions{display:flex;gap:4px;flex-wrap:wrap}
 .actions button,.actions a.btn{padding:4px 8px;font-size:12px;line-height:1.45}
@@ -181,7 +196,8 @@ function render(){
   if(sel.options.length===1) S.carriers.forEach(c=>sel.add(new Option(c.name,c.id)));
 
   const rows=S.packages.map(p=>{
-    const st=`<span class="pill s-${p.status}">${esc(p.status_text)}</span>`;
+    const fresh=p.last_change_at&&S.now-p.last_change_at<900;  // highlight changes for 15 min
+    const st=`<span class="pill s-${p.status}${fresh?" fresh":""}" title="changed ${esc(ago(p.last_change_at))}">${esc(p.status_text)}</span>${fresh?'<span class="newtag">NEW</span>':""}`;
     const lat=(p.alerted_at&&p.carrier_event_time&&!p.date_only)?` <span class="mute">(+${dur(p.alerted_at-p.carrier_event_time)})</span>`:"";
     const err=p.consecutive_errors?`<div class="err">⚠ ${p.consecutive_errors} failed request(s): ${esc(p.last_error)}<br>last good data ${ago(p.last_success_at)} — status may be stale</div>`:"";
     const poll=p.active?(p.checking?"checking…":`every ${dur(p.interval_effective)} · next ${p.next_check_at?ago(p.next_check_at):"soon"}`):"stopped";
