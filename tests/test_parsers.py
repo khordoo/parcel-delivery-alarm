@@ -204,5 +204,22 @@ class ASLHttp404Test(unittest.TestCase):
             a._track_asl(Package(tracking_number="ASL0000000001", carrier="asl"))
 
 
+class EtaTest(unittest.TestCase):
+    def test_intelcom_raw_eta_normalized(self):
+        self.assertEqual(intelcom.eta_of({"eta": "2026-11-28T10:42:15.000000-05:00"}), "2026-11-28T10:42:15-05:00")
+
+    def test_intelcom_public_window_preferred(self):
+        r = {"eta": "2026-11-28T10:42:15.000000-05:00",
+             "public_eta": {"from": "2026-11-28T15:00:00Z", "to": "2026-11-28T17:00:00Z", "min": 1, "max": 2}}
+        self.assertEqual(intelcom.eta_of(r), "2026-11-28T15:00:00+00:00/2026-11-28T17:00:00+00:00")
+
+    def test_intelcom_garbage_eta_is_empty_not_object(self):
+        self.assertEqual(intelcom.eta_of({"eta": None, "public_eta": {"weird": 1}}), "")
+        self.assertIsInstance(intelcom.parse(load("intelcom_pickup_delivered.json")).eta, str)
+
+    def test_precision_edd_is_end_of_window(self):
+        self.assertEqual(precision.parse(load("precision_out_for_delivery.json")).eta, "by:2026-11-26T17:00:00")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -8,6 +8,7 @@ polling faster than 30 s is pointless and impolite.
 from __future__ import annotations
 
 import urllib.parse
+from datetime import datetime
 
 from ..classify import classify
 from ..http import Session
@@ -43,6 +44,23 @@ def map_status(s: dict) -> Status:
     return st
 
 
+def _iso(value) -> str:
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).isoformat(timespec="seconds")
+    except ValueError:
+        return ""
+
+
+def eta_of(result: dict) -> str:
+    """Normalized ETA: "<iso>/<iso>" window (customer-facing public_eta) or "<iso>" (raw estimate).
+    The raw `eta` is Intelcom's internal estimate and can be hours off."""
+    pe = result.get("public_eta")
+    if isinstance(pe, dict) and pe.get("from"):
+        start, end = _iso(pe["from"]), _iso(pe.get("to") or pe["from"])
+        return f"{start}/{end}" if start and end else start
+    return _iso(result.get("eta") or "")
+
+
 def parse(data: dict) -> TrackingResult:
     if not data.get("success"):
         code = (data.get("data") or {}).get("code")
@@ -68,7 +86,7 @@ def parse(data: dict) -> TrackingResult:
         event_time=ts / 1000 if ts else None,
         events=events,
         source="intelcom.ca",
-        eta=result.get("public_eta") or result.get("eta") or "",
+        eta=eta_of(result),
     )
 
 

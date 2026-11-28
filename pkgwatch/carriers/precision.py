@@ -57,7 +57,7 @@ def parse(data: dict) -> TrackingResult:
         events=events,
         source="precisiondeliveries.com",
         sub_carrier="Precision Parcel",
-        eta=data.get("edd") or "",
+        eta=("by:" + data["edd"].replace(" ", "T")) if data.get("edd") else "",  # end of delivery window, local time
     )
 
 

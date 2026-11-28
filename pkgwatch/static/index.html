@@ -94,8 +94,8 @@ ol.hist{margin:6px 0 0 18px;padding:0}
 <section class="card">
   <h2>Packages</h2>
   <div class="tablewrap"><table>
-    <thead><tr><th>Package</th><th>Status</th><th>Carrier time / detected</th><th>Polling</th><th></th></tr></thead>
-    <tbody id="pkgs"><tr><td colspan="5" class="mute">Loading…</td></tr></tbody>
+    <thead><tr><th>Package</th><th>Status</th><th>ETA</th><th>Carrier time / detected</th><th>Polling</th><th></th></tr></thead>
+    <tbody id="pkgs"><tr><td colspan="6" class="mute">Loading…</td></tr></tbody>
   </table></div>
 </section>
 
@@ -177,6 +177,18 @@ function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";cl
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function ago(ts){if(!ts)return"never";const d=S.now-ts;if(d<0)return"in "+dur(-d);return dur(d)+" ago"}
 function dur(s){s=Math.round(s);if(s<60)return s+"s";if(s<3600)return Math.round(s/60)+"m";if(s<86400)return(s/3600).toFixed(1)+"h";return Math.round(s/86400)+"d"}
+function day(d){const t0=new Date();t0.setHours(0,0,0,0);const dd=new Date(d);dd.setHours(0,0,0,0);const n=Math.round((dd-t0)/864e5);return n===0?"today":n===1?"tomorrow":n===-1?"yesterday":d.toLocaleDateString([],{month:"short",day:"numeric"})}
+function hm(d){return d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
+function etaCell(p){
+  if(!p.eta||!p.active)return '<span class="mute">—</span>';
+  let e=String(p.eta),by=e.startsWith("by:");if(by)e=e.slice(3);
+  const [a,b]=e.split("/");const da=new Date(a),db=b?new Date(b):null;
+  if(isNaN(da))return esc(e);  // carrier text, e.g. ASL "November 28, 2026"
+  const midnight=da.getHours()===0&&da.getMinutes()===0&&!db;
+  const txt=midnight?day(da):by?`${day(da)}, by ${hm(da)}`:db&&!isNaN(db)?`${day(da)} ${hm(da)}–${hm(db)}`:`${day(da)} ~${hm(da)}`;
+  const note=midnight?"date only":by?"end of delivery window":db?"carrier's delivery window":"carrier's internal estimate — can be hours off";
+  return `<div>${esc(txt)}</div><div class="mute">${esc(note)}</div>`;
+}
 function tm(ts){return new Date(ts*1000).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
 function t(ts,dateOnly){if(!ts)return"—";const d=new Date(ts*1000);return dateOnly?d.toLocaleDateString():d.toLocaleString()}
 
@@ -206,9 +218,10 @@ function render(){
     const open=openRows.has(p.id)?"open":"";
     return `<tr>
       <td><div><b>${esc(p.name)||""}</b></div><div class="tn">${p.carrier==="generic"?"custom URL":esc(p.tracking_number)}</div>
-        <div class="mute">${esc(p.carrier_name)}${p.sub_carrier?" → "+esc(p.sub_carrier):""}${p.eta?" · ETA "+esc(p.eta):""}</div></td>
+        <div class="mute">${esc(p.carrier_name)}${p.sub_carrier?" → "+esc(p.sub_carrier):""}</div></td>
       <td>${st}<div class="mute">${esc(p.status_label)}</div>${err}
         ${hist?`<details ${open} ontoggle="tog('${p.id}',this.open)"><summary>history (${p.events.length})</summary><ol class="hist mute">${hist}</ol></details>`:""}</td>
+      <td>${etaCell(p)}</td>
       <td><div>${esc(t(p.carrier_event_time,p.date_only))}${p.date_only?(seen?` <span class="mute">· seen ${esc(tm(seen))}</span>`:' <span class="mute">(date only)</span>'):""}</div>
         <div class="mute">${p.alerted_at?"alerted "+esc(t(p.alerted_at))+lat:"changed "+ago(p.last_change_at)}</div>
         ${p.acknowledged_at?`<div class="mute">ack ${esc(t(p.acknowledged_at))}</div>`:""}</td>
@@ -219,7 +232,7 @@ function render(){
         ${p.public_url?`<a class="btn" href="${esc(p.public_url)}" target="_blank" rel="noopener">Open</a>`:""}
         <button class="danger" onclick="del('${p.id}')">Remove</button></div></td></tr>`;
   });
-  $("#pkgs").innerHTML=rows.join("")||`<tr><td colspan="5" class="mute">No packages yet.</td></tr>`;
+  $("#pkgs").innerHTML=rows.join("")||`<tr><td colspan="6" class="mute">No packages yet.</td></tr>`;
 
   $("#events").innerHTML=S.events.map(e=>{
     const d={...e};["ts","iso","kind","pkg","number","carrier"].forEach(k=>delete d[k]);
