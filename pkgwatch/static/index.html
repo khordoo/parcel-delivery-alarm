@@ -185,7 +185,7 @@ function etaCell(p){
   const [a,b]=e.split("/");const da=new Date(a),db=b?new Date(b):null;
   if(isNaN(da))return esc(e);  // carrier text, e.g. ASL "November 28, 2026"
   const midnight=da.getHours()===0&&da.getMinutes()===0&&!db;
-  const txt=midnight?day(da):by?`${day(da)}, by ${hm(da)}`:db&&!isNaN(db)?`${day(da)} ${hm(da)}–${hm(db)}`:`${day(da)} ~${hm(da)}`;
+  const txt=midnight?day(da):by?`${day(da)}, by ${hm(da)}`:db&&!isNaN(db)?(day(da)===day(db)?`${day(da)} ${hm(da)}–${hm(db)}`:`${day(da)} ${hm(da)} – ${day(db)} ${hm(db)}`):`${day(da)} ~${hm(da)}`;
   const note=midnight?"date only":by?"end of delivery window":db?"carrier's delivery window":"carrier's internal estimate — can be hours off";
   return `<div>${esc(txt)}</div><div class="mute">${esc(note)}</div>`;
 }
